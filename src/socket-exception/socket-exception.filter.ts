@@ -13,7 +13,7 @@ export class SocketExceptionFilter implements ExceptionFilter {
 
     this.socketLogger.error(exception.response?.data);
 
-    if (exception.cause.message.includes('ECONNREFUSED')) {
+    if (exception.cause?.message.includes('ECONNREFUSED')) {
       socket.emit('error', 'Connection refused');
       socket.disconnect();
       return;
