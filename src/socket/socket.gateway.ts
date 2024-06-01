@@ -32,14 +32,19 @@ export class SocketGateway implements OnGatewayConnection {
   @WebSocketServer() server: Server;
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
+    if (this.configService.get('NODE_ENV') !== 'production') return;
+
     if (
       socket.handshake.address.includes('127.0.0.1') ||
       socket.handshake.address.includes('localhost')
     )
       return;
-    if (socket.handshake.auth.token) {
+    if (
+      socket.handshake.headers['manage-code'] &&
+      typeof socket.handshake.headers['manage-code'] === 'string'
+    ) {
       const parkInfo = await this.parkRepository.findOne({
-        where: { manageCode: socket.handshake.auth.token },
+        where: { manageCode: socket.handshake.headers['manage-code'] },
         select: ['id', 'ip'],
       });
       if (!parkInfo) {
@@ -95,6 +100,19 @@ export class SocketGateway implements OnGatewayConnection {
     const result = await axios.post(
       `${ApiUrl}/v1/parking-transaction/exit`,
       data,
+      {
+        headers: {
+          'manage-code': this.configService.get(ManageCodeEnv),
+        },
+      },
+    );
+    return result.data;
+  }
+
+  @SubscribeMessage('getUnpaid')
+  async handleGetUnpaid(@MessageBody() data: EnterDto) {
+    const result = await axios.get(
+      `${ApiUrl}/v1/parking-transaction/unpaid?carNum=${data.carNum}`,
       {
         headers: {
           'manage-code': this.configService.get(ManageCodeEnv),
