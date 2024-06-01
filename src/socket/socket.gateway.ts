@@ -56,7 +56,7 @@ export class SocketGateway implements OnGatewayConnection {
   async handleEnter(@MessageBody() data: EnterDto) {
     const result = await axios.post(`${ApiUrl}/v1/parking-transaction`, data, {
       headers: {
-        ManageCode: this.configService.get(ManageCodeEnv),
+        'manage-code': this.configService.get(ManageCodeEnv),
       },
     });
     return result.data;
@@ -69,7 +69,7 @@ export class SocketGateway implements OnGatewayConnection {
       data,
       {
         headers: {
-          ManageCode: this.configService.get(ManageCodeEnv),
+          'manage-code': this.configService.get(ManageCodeEnv),
         },
       },
     );
@@ -83,7 +83,7 @@ export class SocketGateway implements OnGatewayConnection {
       data,
       {
         headers: {
-          ManageCode: this.configService.get(ManageCodeEnv),
+          'manage-code': this.configService.get(ManageCodeEnv),
         },
       },
     );
@@ -97,7 +97,7 @@ export class SocketGateway implements OnGatewayConnection {
       data,
       {
         headers: {
-          ManageCode: this.configService.get(ManageCodeEnv),
+          'manage-code': this.configService.get(ManageCodeEnv),
         },
       },
     );
