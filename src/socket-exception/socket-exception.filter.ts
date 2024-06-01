@@ -11,7 +11,6 @@ export class SocketExceptionFilter implements ExceptionFilter {
     const socket = ctx.getClient<Socket>();
     const callback = host.getArgByIndex(2);
 
-    console.log(exception.cause.message);
     this.socketLogger.error(exception.response?.data);
 
     if (exception.cause.message.includes('ECONNREFUSED')) {
