@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 export const ApiUrl =
   process.env.NODE_ENV === 'production'
     ? 'https://api.parkchargego.link/api'

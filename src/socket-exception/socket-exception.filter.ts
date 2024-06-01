@@ -11,12 +11,18 @@ export class SocketExceptionFilter implements ExceptionFilter {
     const socket = ctx.getClient<Socket>();
     const callback = host.getArgByIndex(2);
 
-    this.socketLogger.error(exception.response.data);
+    console.log(exception.cause.message);
+    this.socketLogger.error(exception.response?.data);
 
+    if (exception.cause.message.includes('ECONNREFUSED')) {
+      socket.emit('error', 'Connection refused');
+      socket.disconnect();
+      return;
+    }
     if (callback && typeof callback === 'function') {
-      callback(exception.response.data);
+      callback(exception.response?.data);
     } else {
-      socket.emit('error', exception.response.data);
+      socket.emit('error', exception.response?.data);
     }
   }
 }
