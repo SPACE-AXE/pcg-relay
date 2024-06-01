@@ -13,8 +13,9 @@ import { Repository } from 'typeorm';
 import { Park } from './entities/park.entity';
 import axios from 'axios';
 import { EnterDto } from './dto/enter.dto';
-import { ApiUrl } from 'src/constants/constants';
+import { ApiUrl, ManageCodeEnv } from 'src/constants/constants';
 import { SocketExceptionFilter } from 'src/socket-exception/socket-exception.filter';
+import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({
   cors: { origin: '*', credentials: true },
@@ -25,11 +26,18 @@ import { SocketExceptionFilter } from 'src/socket-exception/socket-exception.fil
 export class SocketGateway implements OnGatewayConnection {
   constructor(
     @InjectRepository(Park) private readonly parkRepository: Repository<Park>,
+    private readonly configService: ConfigService,
   ) {}
 
   @WebSocketServer() server: Server;
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
+    console.log(socket.handshake.auth.token);
+    if (
+      socket.handshake.address.includes('127.0.0.1') ||
+      socket.handshake.address.includes('localhost')
+    )
+      return;
     if (socket.handshake.auth.token) {
       const parkInfo = await this.parkRepository.findOne({
         where: { manageCode: socket.handshake.auth.token },
@@ -47,7 +55,11 @@ export class SocketGateway implements OnGatewayConnection {
 
   @SubscribeMessage('enter')
   async handleEnter(@MessageBody() data: EnterDto) {
-    const result = await axios.post(`${ApiUrl}/v1/parking-transaction`, data);
+    const result = await axios.post(`${ApiUrl}/v1/parking-transaction`, data, {
+      headers: {
+        ManageCode: this.configService.get(ManageCodeEnv),
+      },
+    });
     return result.data;
   }
 
@@ -56,6 +68,11 @@ export class SocketGateway implements OnGatewayConnection {
     const result = await axios.patch(
       `${ApiUrl}/v1/parking-transaction/charge-start`,
       data,
+      {
+        headers: {
+          ManageCode: this.configService.get(ManageCodeEnv),
+        },
+      },
     );
     return result.data;
   }
@@ -65,6 +82,11 @@ export class SocketGateway implements OnGatewayConnection {
     const result = await axios.patch(
       `${ApiUrl}/v1/parking-transaction/charge-finish`,
       data,
+      {
+        headers: {
+          ManageCode: this.configService.get(ManageCodeEnv),
+        },
+      },
     );
     return result.data;
   }
@@ -74,6 +96,11 @@ export class SocketGateway implements OnGatewayConnection {
     const result = await axios.post(
       `${ApiUrl}/v1/parking-transaction/exit`,
       data,
+      {
+        headers: {
+          ManageCode: this.configService.get(ManageCodeEnv),
+        },
+      },
     );
     return result.data;
   }
