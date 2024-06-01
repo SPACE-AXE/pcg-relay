@@ -32,7 +32,6 @@ export class SocketGateway implements OnGatewayConnection {
   @WebSocketServer() server: Server;
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
-    console.log(socket.handshake.auth.token);
     if (
       socket.handshake.address.includes('127.0.0.1') ||
       socket.handshake.address.includes('localhost')
@@ -55,6 +54,7 @@ export class SocketGateway implements OnGatewayConnection {
 
   @SubscribeMessage('enter')
   async handleEnter(@MessageBody() data: EnterDto) {
+    console.log(data);
     const result = await axios.post(`${ApiUrl}/v1/parking-transaction`, data, {
       headers: {
         ManageCode: this.configService.get(ManageCodeEnv),
