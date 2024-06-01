@@ -12,7 +12,6 @@ import { Server, Socket } from 'socket.io';
 import { Repository } from 'typeorm';
 import { Park } from './entities/park.entity';
 import axios from 'axios';
-import { EnterDto } from './dto/enter.dto';
 import { ApiUrl, ManageCodeEnv } from 'src/constants/constants';
 import { SocketExceptionFilter } from 'src/socket-exception/socket-exception.filter';
 import { ConfigService } from '@nestjs/config';
@@ -53,20 +52,24 @@ export class SocketGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage('enter')
-  async handleEnter(@MessageBody() data: EnterDto) {
-    const result = await axios.post(`${ApiUrl}/v1/parking-transaction`, data, {
-      headers: {
-        'manage-code': this.configService.get(ManageCodeEnv),
+  async handleEnter(@MessageBody() data: string) {
+    const result = await axios.post(
+      `${ApiUrl}/v1/parking-transaction`,
+      JSON.parse(data),
+      {
+        headers: {
+          'manage-code': this.configService.get(ManageCodeEnv),
+        },
       },
-    });
+    );
     return result.data;
   }
 
   @SubscribeMessage('chargeStart')
-  async handleChargeStart(@MessageBody() data: EnterDto) {
+  async handleChargeStart(@MessageBody() data: string) {
     const result = await axios.patch(
       `${ApiUrl}/v1/parking-transaction/charge-start`,
-      data,
+      JSON.parse(data),
       {
         headers: {
           'manage-code': this.configService.get(ManageCodeEnv),
@@ -77,10 +80,10 @@ export class SocketGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage('chargeFinish')
-  async handleChargeEnd(@MessageBody() data: EnterDto) {
+  async handleChargeEnd(@MessageBody() data: string) {
     const result = await axios.patch(
       `${ApiUrl}/v1/parking-transaction/charge-finish`,
-      data,
+      JSON.parse(data),
       {
         headers: {
           'manage-code': this.configService.get(ManageCodeEnv),
@@ -91,10 +94,10 @@ export class SocketGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage('exit')
-  async handleExit(@MessageBody() data: EnterDto) {
+  async handleExit(@MessageBody() data: string) {
     const result = await axios.post(
       `${ApiUrl}/v1/parking-transaction/exit`,
-      data,
+      JSON.parse(data),
       {
         headers: {
           'manage-code': this.configService.get(ManageCodeEnv),
