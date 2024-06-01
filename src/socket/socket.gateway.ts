@@ -54,7 +54,6 @@ export class SocketGateway implements OnGatewayConnection {
 
   @SubscribeMessage('enter')
   async handleEnter(@MessageBody() data: EnterDto) {
-    console.log(data);
     const result = await axios.post(`${ApiUrl}/v1/parking-transaction`, data, {
       headers: {
         ManageCode: this.configService.get(ManageCodeEnv),
