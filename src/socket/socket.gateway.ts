@@ -1,5 +1,4 @@
 import { ForbiddenException, UseFilters } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
   ConnectedSocket,
   MessageBody,
@@ -9,13 +8,12 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Repository } from 'typeorm';
-import { Park } from './entities/park.entity';
 import axios from 'axios';
 import { ApiUrl, ManageCodeEnv } from 'src/constants/constants';
 import { SocketExceptionFilter } from 'src/socket-exception/socket-exception.filter';
 import { ConfigService } from '@nestjs/config';
 import { EnterDto } from './dto/enter.dto';
+import { SocketLogger } from 'src/logger/socket.logger';
 
 @WebSocketGateway({
   cors: { origin: '*', credentials: true },
@@ -25,8 +23,8 @@ import { EnterDto } from './dto/enter.dto';
 @UseFilters(SocketExceptionFilter)
 export class SocketGateway implements OnGatewayConnection {
   constructor(
-    @InjectRepository(Park) private readonly parkRepository: Repository<Park>,
     private readonly configService: ConfigService,
+    private readonly socketLogger: SocketLogger,
   ) {}
 
   @WebSocketServer() server: Server;
@@ -43,11 +41,10 @@ export class SocketGateway implements OnGatewayConnection {
       socket.handshake.headers['manage-code'] &&
       typeof socket.handshake.headers['manage-code'] === 'string'
     ) {
-      const parkInfo = await this.parkRepository.findOne({
-        where: { manageCode: socket.handshake.headers['manage-code'] },
-        select: ['id', 'ip'],
-      });
-      if (!parkInfo) {
+      if (
+        socket.handshake.headers['manage-code'] !==
+        this.configService.get(ManageCodeEnv)
+      ) {
         socket.emit('error', new ForbiddenException('Unauthorized'));
         socket.disconnect();
       }
@@ -56,7 +53,7 @@ export class SocketGateway implements OnGatewayConnection {
       socket.disconnect();
     }
 
-    console.log(`Connected at ${socket.handshake.address}`);
+    this.socketLogger.log('Client connected: ' + socket.handshake.address);
   }
 
   @SubscribeMessage('enter')
