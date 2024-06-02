@@ -55,6 +55,8 @@ export class SocketGateway implements OnGatewayConnection {
       socket.emit('error', new ForbiddenException('Unauthorized'));
       socket.disconnect();
     }
+
+    console.log(`Connected at ${socket.handshake.address}`);
   }
 
   @SubscribeMessage('enter')
