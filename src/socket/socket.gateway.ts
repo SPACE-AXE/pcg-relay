@@ -3,6 +3,7 @@ import {
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -21,7 +22,7 @@ import { SocketLogger } from 'src/logger/socket.logger';
   cookie: true,
 })
 @UseFilters(SocketExceptionFilter)
-export class SocketGateway implements OnGatewayConnection {
+export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly configService: ConfigService,
     private readonly socketLogger: SocketLogger,
@@ -30,7 +31,7 @@ export class SocketGateway implements OnGatewayConnection {
   @WebSocketServer() server: Server;
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
-    if (this.configService.get('NODE_ENV') !== 'production') return;
+    // if (this.configService.get('NODE_ENV') !== 'production') return;
 
     if (
       socket.handshake.address.includes('127.0.0.1') ||
@@ -47,13 +48,19 @@ export class SocketGateway implements OnGatewayConnection {
       ) {
         socket.emit('error', new ForbiddenException('Unauthorized'));
         socket.disconnect();
+        return;
       }
     } else {
       socket.emit('error', new ForbiddenException('Unauthorized'));
       socket.disconnect();
+      return;
     }
 
     this.socketLogger.log('Client connected: ' + socket.handshake.address);
+  }
+
+  handleDisconnect(@ConnectedSocket() socket: Socket) {
+    this.socketLogger.log('Client disconnected: ' + socket.handshake.address);
   }
 
   @SubscribeMessage('enter')
